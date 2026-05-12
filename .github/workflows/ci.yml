@@ -11,6 +11,20 @@ jobs:
   build:
     runs-on: [ ubuntu-latest ]
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -26,12 +40,10 @@ jobs:
 
       - name: run unittest
         env:
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          POSTGRES_USERNAME: ${{ secrets.POSTGRES_USERNAME }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_URL: jdbc:postgresql://localhost:5432/testdb
+          POSTGRES_USERNAME: user
+          POSTGRES_PASSWORD: password
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-          REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
         run: |
           ./gradlew clean test
