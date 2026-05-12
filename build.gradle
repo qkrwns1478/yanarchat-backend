@@ -42,6 +42,19 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'e2e'
+    }
     systemProperty 'io.lettuce.core.epoll', 'false'
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'LM Studio가 실행 중일 때만 수동으로 실행하는 E2E 테스트'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags 'e2e'
+    }
+    systemProperty 'io.lettuce.core.epoll', 'false'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
 }
