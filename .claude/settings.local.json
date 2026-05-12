@@ -5,7 +5,9 @@
       "Bash(./gradlew compileJava compileTestJava)",
       "Bash(./gradlew test *)",
       "Bash(git push *)",
-      "Bash(./gradlew compileJava)"
+      "Bash(./gradlew compileJava)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.java\")",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }
