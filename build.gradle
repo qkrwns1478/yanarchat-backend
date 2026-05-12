@@ -43,4 +43,5 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    systemProperty 'io.lettuce.core.epoll', 'false'
 }
