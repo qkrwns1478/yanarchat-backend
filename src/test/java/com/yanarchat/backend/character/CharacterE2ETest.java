@@ -2,6 +2,7 @@ package com.yanarchat.backend.character;
 
 import com.yanarchat.backend.auth.AuthDto;
 import com.yanarchat.backend.auth.AuthService;
+import com.yanarchat.backend.common.LmStudioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
