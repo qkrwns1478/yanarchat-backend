@@ -1,5 +1,6 @@
 package com.yanarchat.backend.character;
 
+import com.yanarchat.backend.common.LmStudioService;
 import com.yanarchat.backend.user.User;
 import com.yanarchat.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 

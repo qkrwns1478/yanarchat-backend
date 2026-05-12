@@ -1,5 +1,6 @@
 package com.yanarchat.backend.character;
 
+import com.yanarchat.backend.common.LmStudioService;
 import com.yanarchat.backend.user.User;
 import com.yanarchat.backend.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;

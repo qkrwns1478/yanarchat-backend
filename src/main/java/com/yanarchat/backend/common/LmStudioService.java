@@ -1,15 +1,20 @@
-package com.yanarchat.backend.character;
+package com.yanarchat.backend.common;
 
+import com.yanarchat.backend.character.CharacterDto;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +121,101 @@ public class LmStudioService {
             );
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "LM Studio 응답 파싱에 실패했습니다.");
+        }
+    }
+
+    public Flux<String> streamChat(String systemPrompt, List<Map<String, String>> messages) {
+        List<Map<String, Object>> allMessages = new ArrayList<>();
+        allMessages.add(Map.of("role", "system", "content", systemPrompt));
+        for (Map<String, String> m : messages) {
+            allMessages.add(Map.of("role", m.get("role"), "content", m.get("content")));
+        }
+
+        String requestBody;
+        try {
+            requestBody = objectMapper.writeValueAsString(Map.of(
+                    "model", model,
+                    "stream", true,
+                    "temperature", 0.8,
+                    "messages", allMessages
+            ));
+        } catch (Exception e) {
+            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "요청 생성에 실패했습니다."));
+        }
+
+        return webClient.post()
+                .uri("/chat/completions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToFlux(DataBuffer.class)
+                .onErrorMap(WebClientException.class,
+                        e -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "LM Studio 연결에 실패했습니다."))
+                .map(buffer -> {
+                    byte[] bytes = new byte[buffer.readableByteCount()];
+                    buffer.read(bytes);
+                    DataBufferUtils.release(buffer);
+                    return new String(bytes, StandardCharsets.UTF_8);
+                })
+                .flatMap(chunk -> Flux.fromArray(chunk.split("\n")))
+                .map(String::trim)
+                .filter(line -> line.startsWith("data: "))
+                .map(line -> line.substring(6).trim())
+                .filter(data -> !"[DONE]".equals(data))
+                .mapNotNull(this::extractTokenFromChunk)
+                .filter(token -> !token.isEmpty());
+    }
+
+    public String extractMemory(String userMessage, String assistantMessage) {
+        String conversation = "사용자: " + userMessage + "\nAI: " + assistantMessage;
+        String requestBody;
+        try {
+            requestBody = objectMapper.writeValueAsString(Map.of(
+                    "model", model,
+                    "temperature", 0.3,
+                    "messages", List.of(
+                            Map.of("role", "system",
+                                    "content", "You are a memory extraction assistant. Analyze the given conversation and determine if there is important factual information about the user that should be remembered for future conversations (e.g., name, preferences, job, personal facts). If found, summarize it concisely in one sentence in Korean. If there is nothing important to remember, respond with exactly 'NONE'."),
+                            Map.of("role", "user", "content", conversation + "\n\n중요한 정보가 있나요?")
+                    )
+            ));
+        } catch (Exception e) {
+            return null;
+        }
+
+        try {
+            String responseJson = webClient.post()
+                    .uri("/chat/completions")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+            return parseSimpleResponse(responseJson);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String extractTokenFromChunk(String data) {
+        try {
+            JsonNode root = objectMapper.readTree(data);
+            JsonNode content = root.path("choices").get(0).path("delta").path("content");
+            if (content.isMissingNode() || content.isNull()) return "";
+            String text = content.textValue();
+            return text != null ? text : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String parseSimpleResponse(String responseJson) {
+        try {
+            JsonNode root = objectMapper.readTree(responseJson);
+            String content = root.path("choices").get(0).path("message").path("content").textValue();
+            return content != null ? content.trim() : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 
