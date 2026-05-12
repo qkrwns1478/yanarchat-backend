@@ -56,4 +56,4 @@ jobs:
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
         run: |
-          ./gradlew clean test
+          ./gradlew clean test --info
