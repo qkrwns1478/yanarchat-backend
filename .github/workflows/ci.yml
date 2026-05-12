@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: [ ubuntu-latest ]
+    runs-on: ubuntu-latest
 
     services:
       postgres:
@@ -18,10 +18,20 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
           POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 5432:5432
       redis:
         image: redis:latest
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 6379:6379
 
@@ -30,9 +40,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: java setup
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '17'
 
       - name: make executable gradlew
@@ -40,10 +50,10 @@ jobs:
 
       - name: run unittest
         env:
-          POSTGRES_URL: jdbc:postgresql://localhost:5432/testdb
-          POSTGRES_USERNAME: user
-          POSTGRES_PASSWORD: password
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+          SPRING_DATASOURCE_USERNAME: user
+          SPRING_DATASOURCE_PASSWORD: password
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
         run: |
           ./gradlew clean test
