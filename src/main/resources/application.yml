@@ -33,3 +33,6 @@ spring:
       chat:
         options:
           model: "local-model"
+
+jwt:
+  secret: ${JWT_SECRET}
