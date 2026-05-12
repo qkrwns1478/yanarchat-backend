@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: yanarchat-backend
+
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:${POSTGRES_URL}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+
+  ai:
+    openai:
+      api-key: "lm-studio"
+      base-url: "http://localhost:1234/v1"
+      chat:
+        options:
+          model: "local-model"
