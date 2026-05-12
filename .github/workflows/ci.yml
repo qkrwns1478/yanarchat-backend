@@ -55,5 +55,6 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: password
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
+          JWT_SECRET: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         run: |
           ./gradlew clean test --info
